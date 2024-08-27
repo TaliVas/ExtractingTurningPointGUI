@@ -9,6 +9,6 @@ pip install -r requirements.txt
 python main.py
 
 
-pyinstaller --onefile --add-data "data;data" main.py
+pyinstaller --onefile main.py
 
 ```
