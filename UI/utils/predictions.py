@@ -48,7 +48,7 @@ def pad_sequences(sequences, maxlen, dtype='float32', padding='post', value=0):
             padded_sequences[i, :len(seq)] = seq
     return padded_sequences
 
-def make_predictions(df_test_features, models, model_name, features, model_path):
+def make_predictions(df_test_features, model_name, features, model_path):
     # Extract sequences from the DataFrame
     X = df_test_features.drop(['type_trajectory'], axis=1)
     grouped = X.groupby('id')
@@ -70,8 +70,6 @@ def make_predictions(df_test_features, models, model_name, features, model_path)
     # Convert the data to PyTorch tensors
     test_sequences_tensor = torch.tensor(trajectories_padded, dtype=torch.float32)
     test_types_tensor = torch.tensor(trajectory_type_indices, dtype=torch.long)
-    # models = 'start_move_model.pth'
-    # model_name = {'start_move_model.pth': 'start_move'}
 
     # Initialize an empty DataFrame for the result
     df_predicted = pd.DataFrame({'id': ids })
@@ -90,7 +88,7 @@ def make_predictions(df_test_features, models, model_name, features, model_path)
         predictions.extend(outputs.squeeze().tolist())
 
     # Convert each label's predictions into a DataFrame
-    column_name = model_name[models]
+    column_name = model_name
     df_temp = pd.DataFrame({column_name: predictions, 'id': ids})
 
     # Merge the temporary DataFrame with the main annotated DataFrame
@@ -174,13 +172,15 @@ def plot_trajectory_to_file(df_predicted, df_test_features, filename):
     plt.tight_layout(rect=[0, 0, 1, 0.96])  # Adjust layout to fit the title
     plt.savefig(filename, dpi=300)
 
-def predict_and_plot_start(df_test_features, models, model_name, features, model_path):
-    df_predicted = make_predictions(df_test_features, models, model_name, features, model_path)
+def predict_and_plot_start(df_test_features, model_name, features, model_path):
+    col_name = model_name.split("_model")[0] 
+    df_predicted = make_predictions(df_test_features, col_name, features, model_path)
     edited_df_predicted = edit_predictions(df_predicted, df_test_features, 'start_move')
     return edited_df_predicted
 
-def predict_and_plot_turn(df_test_features, models, model_name, features, model_path):
+def predict_and_plot_turn(df_test_features, model_name, features, model_path):
+    col_name = model_name.split("_model")[0]
     df_test_features_turn = df_test_features[(~df_test_features['id_update'].isna()) & (df_test_features['id_target'] != df_test_features['id_update'])]
-    df_predicted = make_predictions(df_test_features_turn, models, model_name, features, model_path)
+    df_predicted = make_predictions(df_test_features_turn, col_name, features, model_path)
     edited_df_predicted = edit_predictions(df_predicted, df_test_features_turn, 'stop_turn')
     return edited_df_predicted
