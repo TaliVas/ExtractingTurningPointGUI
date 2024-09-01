@@ -1,15 +1,10 @@
 import torch
 import torch.nn as nn
-import torch.optim as optim
-from torch.utils.data import Dataset, DataLoader
-from torch.optim.lr_scheduler import ReduceLROnPlateau
-from sklearn.model_selection import train_test_split
+from torch.utils.data import Dataset
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 import random
-from utils.convert_raw_to_df import convert_raw_to_df
-from utils.feature_calc import feature_calc
 
 class TrajectoryDataset(Dataset):
     def __init__(self, sequences, types, labels):
@@ -137,7 +132,7 @@ def edit_predictions(df_predicted, df_test_features, col_name):
     return df_predicted
 
 
-def plot_trajectory(df_predicted, df_test_features):
+def plot_trajectory_to_file(df_predicted, df_test_features, filename):
     # Randomly select 10 unique ids from the test data
     random_indices = random.sample(sorted(df_test_features['id'].unique()), 10)
 
@@ -177,9 +172,7 @@ def plot_trajectory(df_predicted, df_test_features):
     
     fig.suptitle('Predictions', fontsize=16)
     plt.tight_layout(rect=[0, 0, 1, 0.96])  # Adjust layout to fit the title
-    plt.show()
-
-
+    plt.savefig(filename, dpi=300)
 
 def predict_and_plot_start(df_test_features, models, model_name, features, model_path):
     df_predicted = make_predictions(df_test_features, models, model_name, features, model_path)
@@ -191,29 +184,3 @@ def predict_and_plot_turn(df_test_features, models, model_name, features, model_
     df_predicted = make_predictions(df_test_features_turn, models, model_name, features, model_path)
     edited_df_predicted = edit_predictions(df_predicted, df_test_features_turn, 'stop_turn')
     return edited_df_predicted
-
-def main():
-    merged_df = convert_raw_to_df('/Users/avitalvasiliev/Documents/GitHub/ExtractingTurningPointGUI/t011222')
-    df_test_features = feature_calc(merged_df)
-
-    start_models = 'start_move_model.pth'
-    start_model_name = {'start_move_model.pth': 'start_move'}
-    start_features = ['scaled_rotation_x', 'scaled_rotation_y','normalized_time','scaled_velocity','scaled_angle']
-    start_model_path = f'/Users/avitalvasiliev/Documents/GitHub/ExtractingTurningPointGUI/{start_models}'
-    start_df_predicted = predict_and_plot_start(df_test_features, start_models, start_model_name, start_features, start_model_path)
-
-    turn_features = ['scaled_rotation_x', 'scaled_rotation_y','normalized_time','scaled_velocity','scaled_angle','scaled_angle_to_end','scaled_curvature','scaled_distance_to_end']
-    turn_models = 'stop_turn_model.pth'
-    turn_model_name = {'stop_turn_model.pth': 'stop_turn'}
-    turn_model_path = f'/Users/avitalvasiliev/Documents/GitHub/ExtractingTurningPointGUI/{turn_models}'
-    turn_df_predicted = predict_and_plot_turn(df_test_features, turn_models, turn_model_name, turn_features, turn_model_path)
-
-    merged_prediction = start_df_predicted.merge(turn_df_predicted, on='id', how='outer')
-    columns_to_drop = [col for col in merged_prediction.columns if col.endswith('_y')]
-    merged_prediction.drop(columns=columns_to_drop, inplace=True)
-    merged_prediction.columns = merged_prediction.columns.str.replace('_x', '', regex=False)
-
-    #TODO: save to file
-    plot_trajectory(merged_prediction, df_test_features)
-
-    return merged_prediction  
