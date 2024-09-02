@@ -74,13 +74,19 @@ def make_predictions(df_test_features, model_name, features, model_path):
     # Initialize an empty DataFrame for the result
     df_predicted = pd.DataFrame({'id': ids })
 
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
     # Initialize and load the model
     model = TrajectoryModel(len(unique_trajectory_types), number_of_features, sequence_length)
-    model.load_state_dict(torch.load(model_path))
+    model.load_state_dict(torch.load(model_path, map_location=device, weights_only=True))
+    model.to(device)
     model.eval()
 
     # Initialize a list to store predictions
     predictions = []
+
+    test_sequences_tensor = test_sequences_tensor.to(device)
+    test_types_tensor = test_types_tensor.to(device)
 
     # Make predictions using the model
     with torch.no_grad():
