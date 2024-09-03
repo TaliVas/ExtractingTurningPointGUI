@@ -10,15 +10,10 @@ def extract_data_from_info(day_dir):  # info of entire day
     Info_file = [f for f in os.listdir(Info_dir) if f.endswith('param.mat')][0]
     Info_file_path = os.path.join(Info_dir, Info_file)
     Info_data = scipy.io.loadmat(Info_file_path)
-    recording_day_id = Info_data['DDFparam']['ID'][0][0][0][0]
+    recording_day_id = Info_data['DDFparam']['ID'].flatten()[0]
     SESSparam = Info_data['SESSparam']
-    fileConfig = SESSparam['fileConfig'][0, 0]
-    HFS_field = fileConfig['HFS'][0]
-    type_list = np.array([int(x[0][0]) for x in HFS_field])
-    SubSess = SESSparam['SubSess'][0, 0]
-    Files_field = SubSess['Files'][0][0]
-    session_list = Files_field.tolist()
-
+    type_list = SESSparam['fileConfig'].flatten()[0]['HFS'].flatten().astype(int)
+    session_list = SESSparam['SubSess'].flatten()[0]['Files'].flatten()[0].tolist()
     return recording_day_id, type_list, session_list
 
 def extract_data_from_edfiles_ed2videomap(day_dir, recording_day_id, type_list, session_list):
@@ -34,7 +29,7 @@ def extract_data_from_edfiles_ed2videomap(day_dir, recording_day_id, type_list, 
         file_index = os.path.splitext(file_name)[0].split('.')[-1]
 
         # Load the ED file
-        ed_data = scipy.io.loadmat(ed_file_path)
+        ed_data = scipy.io.loadmat(ed_file_path, struct_as_record=True, squeeze_me=True)
         failed_non_failed = ed_data['trials'][:, 2]
         trial_events = ed_data['TrialTimes']
         id_target = ed_data['bhvStat'][:, 2]
@@ -42,14 +37,14 @@ def extract_data_from_edfiles_ed2videomap(day_dir, recording_day_id, type_list, 
         video_ticks = ed_data['VideoTicks']
 
         # Load the map file
-        ED2videomap = scipy.io.loadmat(map_file_path)['ed2video']
+        ED2videomap = scipy.io.loadmat(map_file_path, struct_as_record=True, squeeze_me=True)['ed2video']
 
         # Extract the relevant columns
         df = pd.DataFrame(np.round(ED2videomap), columns=['trial_number_in_file', 'id'])
         df['failed_non_failed'] = failed_non_failed
         df_non_failed = df[df['failed_non_failed'] == 1].copy()
         df_non_failed['file_number'] = int(file_index)
-        df_non_failed['recording_day'] = recording_day_id
+        df_non_failed['recording_day'] = int(recording_day_id)
         df_non_failed['type'] = df_non_failed['file_number'].apply(lambda idx: 'HFS' if type_list[int(idx) - 1] == 1 else 'Control')
         for session_number, (start, end) in enumerate(session_list, start=1):
             if start <= int(file_index) <= end:
@@ -70,8 +65,8 @@ def extract_data_from_edfiles_ed2videomap(day_dir, recording_day_id, type_list, 
         video_ticks_filtered = {}
 
         for trial in valid_trials:
-            timestamps = video_ticks[0][trial][0][0, :]
-            timestamp_index = video_ticks[0][trial][0][1, :]
+            timestamps = video_ticks[trial][0][0]
+            timestamp_index = video_ticks[trial][0][1]
             filtered_timestamps = timestamps[timestamp_index != 0]
             video_ticks_filtered[trial+1] = filtered_timestamps
 
@@ -151,3 +146,4 @@ def convert_raw_to_df(day_dir):
     merged_df.drop(columns=['failed_non_failed'], inplace=True)
     add_timestamps(merged_df, video_ticks_total)
     return merged_df
+
