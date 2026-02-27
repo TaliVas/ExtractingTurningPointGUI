@@ -1,0 +1,5 @@
+ID,EMG,GeneralComment,Electrode,RecMode,Name,Channel,InUse,X,Y,Cell1st,CellWa,CellLast,Active,Threshold,Passive
+32,0,4 electrodes,NA,2,Electrode1,CUnit1,1,4.5,3.5,10.8,10.9,10.7,Wrist,35,
+32,0,4 electrodes,NA,2,Electrode2,CUnit2,1,-1.5,4.5,14.2,14.9,14.2,Finger,6,
+32,0,4 electrodes,NA,2,Electrode3,CUnit3,1,0.5,-4.5,14.4,14.5,14.4,Shoulder,35,
+32,0,4 electrodes,NA,2,Electrode4,CUnit4,1,-4.5,-0.5,15.7,16.3,15.7,Elbow,23,

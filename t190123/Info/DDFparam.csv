@@ -1,0 +1,2 @@
+ID,EMG,GeneralComment,Electrode,RecMode,Name,Channel,InUse,X,Y,Cell1st,CellWa,CellLast,Active,Threshold,Passive
+56,0,128 electrodes,NA,4,Probe,CUnit1..32,1,3,8,1.2,4,0.96,,,
